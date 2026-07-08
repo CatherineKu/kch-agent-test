@@ -50,8 +50,8 @@ envs:
 im:
   feishu:
     enabled: true
-    app_id: ${cli_aac602159c78dcca}
-    app_secret: ${nl04Bdwx9QyLaSmNydRpIbovoSiH3HhS}
+    app_id: ${FEISHU_APP_ID}
+    app_secret: ${FEISHU_APP_SECRET}
 
 # ── Frontend BFF (optional) ──────────────────────────────
 # Public VeFaaS front door: OAuth login at the edge, then reverse-proxy to the
