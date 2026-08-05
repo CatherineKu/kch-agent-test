@@ -14,8 +14,8 @@
 
 from inspect import signature
 
-from agents.test.agent import AGENT_DISPLAY_NAMES, AGENT_DRAFT, root_agent
-from agents.test.dynamic_a2a import enable_dynamic_a2a_tools
+from agents.kch_final_test.agent import AGENT_DISPLAY_NAMES, AGENT_DRAFT, root_agent
+from agents.kch_final_test.dynamic_a2a import enable_dynamic_a2a_tools
 from veadk.integrations.agentkit import create_agentkit_app, run_agentkit_app
 
 _app_options = {
