@@ -1,36 +1,13 @@
-# kch-agent-test
+# kch_final_test
 
-An **internal employee & IT service-desk** agent ([VeADK](https://github.com/volcengine/veadk-python)),
-scaffolded with `agentkit init`. It runs as the ADK API server and is delivered
-as a **Feishu bot**: `agentkit deploy` builds the runtime and a Feishu proxy that
-bridges the bot to it over WebSocket.
+一个基于 VeADK 构建的智能助手，理解用户意图并调用合适的工具完成任务。
 
-The agent (`assistant/agent.py`) answers from an internal knowledge base and can
-create/track support tickets and check leave balances. Every backend is an
-in-memory mock — replace each tool's body with calls to your real IT/HR systems.
-
-## Run it locally
+## 运行
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env        # set your Volcengine AK/SK
-python main.py              # serves the ADK API on http://0.0.0.0:8000
+cp .env.example .env   # 填入你的密钥
+python app.py
 ```
 
-Probe it: `curl localhost:8000/list-apps`.
-
-## Deploy it (with the Feishu bot)
-
-```bash
-export FEISHU_APP_ID=... FEISHU_APP_SECRET=...
-agentkit deploy
-```
-
-`im.feishu` is already enabled in `.agentkit/agentkit.yaml`, so `agentkit deploy`
-also ships the Feishu proxy — no flags needed. See the docs for creating the
-Feishu app and granting bot permissions.
-
-## Next steps
-
-- Replace the mock tools in `assistant/agent.py` with your real ITSM/HR APIs.
-- Tune the `instruction` for your company's tone and policies.
+`app.py` 通过 VeADK 的 AgentKit 公共组件发布 `root_agent`，监听 `0.0.0.0:8000`。

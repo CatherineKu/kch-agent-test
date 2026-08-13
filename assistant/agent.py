@@ -34,6 +34,20 @@ _ticket_seq = count(1001)
 # Remaining annual-leave balance (days) by employee id.
 _LEAVE_BALANCE = {"e1001": 8.5, "e1002": 12.0, "e2043": 3.0}
 
+# Bookable meeting rooms: name -> capacity (seats).
+_MEETING_ROOMS = {"A-301": 6, "A-508": 12, "B-102": 4, "B-704": 20}
+
+# Meeting-room bookings created in this process: id -> record.
+_BOOKINGS: dict[str, dict] = {}
+_booking_seq = count(5001)
+
+# Expense reimbursement forms: id -> record.
+_EXPENSES = {
+    "EXP-2043": {"amount": 320.0, "status": "审批中", "approver": "李经理"},
+    "EXP-2044": {"amount": 1580.5, "status": "已到账", "approver": "王总监"},
+    "EXP-2050": {"amount": 88.0, "status": "已驳回", "approver": "李经理"},
+}
+
 
 # --- Tools -------------------------------------------------------------------
 
@@ -99,19 +113,63 @@ def check_leave_balance(employee_id: str) -> dict:
     return {"employee_id": employee_id.lower().strip(), "annual_leave_days": days}
 
 
+def book_meeting_room(room: str, time_slot: str, attendees: int = 1) -> dict:
+    """Book an internal meeting room for a given time slot.
+
+    Args:
+        room: Room name, e.g. "A-301", "B-704".
+        time_slot: Requested time, e.g. "2026-08-14 14:00-15:00".
+        attendees: Number of attendees; must not exceed the room capacity.
+
+    Returns:
+        A dict with the new booking id, or an error message.
+    """
+    key = room.upper().strip()
+    capacity = _MEETING_ROOMS.get(key)
+    if capacity is None:
+        return {"result": f"未找到会议室 {room},可选:{', '.join(_MEETING_ROOMS)}。"}
+    if attendees > capacity:
+        return {"result": f"会议室 {key} 仅容纳 {capacity} 人,超出人数 {attendees}。"}
+    booking_id = f"MR-{next(_booking_seq)}"
+    _BOOKINGS[booking_id] = {"room": key, "time_slot": time_slot, "attendees": attendees, "status": "confirmed"}
+    return {"booking_id": booking_id, "status": "confirmed", "message": f"已预订 {key}({time_slot},{attendees} 人)。"}
+
+
+def get_expense_status(expense_id: str) -> dict:
+    """Look up the current status of an expense reimbursement form.
+
+    Args:
+        expense_id: The expense form id, e.g. "EXP-2043".
+
+    Returns:
+        A dict with the amount, status and approver, or a not-found message.
+    """
+    record = _EXPENSES.get(expense_id.upper().strip())
+    if not record:
+        return {"result": f"未找到报销单 {expense_id}。"}
+    return {"expense_id": expense_id.upper().strip(), **record}
+
+
 # `root_agent` is the name the veADK Frontend and the ADK server look for. The
 # agent name must be a valid identifier — it is also the ADK "app name".
 root_agent = Agent(
     name="assistant",
     description="企业内部员工助手:IT 服务台、工单与假期自助查询。",
     instruction=(
-        "你是企业内部的员工助手,服务对象是公司员工。你能做三类事:检索内部 IT/HR 知识库、"
-        "创建与查询支持工单、查询年假余额。请始终用简体中文、专业而友好地回复。\n"
+        "你是企业内部的员工助手,服务对象是公司员工。你能做这些事:检索内部 IT/HR 知识库、"
+        "创建与查询支持工单、查询年假余额、预订会议室、查询报销单状态。请始终用简体中文、专业而友好地回复。\n"
         "工作原则:\n"
         "1. 能用知识库直接解答的,先查知识库再回答;\n"
         "2. 确需人工处理时才创建工单,且创建前先与用户确认关键信息(问题描述、类别、紧急程度);\n"
         "3. 缺少必要参数(如工号、工单号)时先向用户询问,不要臆造;\n"
         "4. 回复简洁、给出可执行的下一步。"
     ),
-    tools=[search_knowledge_base, create_support_ticket, get_ticket_status, check_leave_balance],
+    tools=[
+        search_knowledge_base,
+        create_support_ticket,
+        get_ticket_status,
+        check_leave_balance,
+        book_meeting_room,
+        get_expense_status,
+    ],
 )
